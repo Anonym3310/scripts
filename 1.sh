@@ -30,12 +30,13 @@ echo -e "$red\n ##--------------------------------------------------------------
 
 #===[ Most Editable ]===#
 
-export DEFCONFIG=alucard_defconfig
-export NKD=cheeseburger-n
-export CODENAME=cheeseburger
-GCC_or_CLANG=1 #1 - GCC, 2 - CLANG
-BUILD_KH=2 #1 - ENABLE, 2 - DISABLE
-ONLY_BUILD_KH=1 #1 - DISABLE, 2 - ENABLE
+export DEFCONFIG=akame-raphael_defconfig
+export NKD=sm8150                               #kernel dir name
+export CODENAME=raphael
+GCC_or_CLANG=2                                  #1 - GCC, 2 - CLANG      | use gcc or clang
+BUILD_KH=2                                      #1 - ENABLE, 2 - DISABLE | make kernel headers
+ONLY_BUILD_KH=2                                 #1 - DISABLE, 2 - ENABLE | make only kernel headers
+ONLY_BUILD_AN=1                                 #1 - DISABLE, 2 - ENABLE | make only AnyKernel
 
 
 #===[ Editable ]===#
@@ -50,7 +51,7 @@ export ANYKERNEL_DIR=AnyKernel3
 export OUT_DIR=out
 export ARCH=arm64
 export SUBARCH=$ARCH
-export UN=$HOME/kernels
+export UN=$HOME/kernels                         #path to the kernel folder
 export CONFIG=".config"
 export LOG="2>&1 | tee log.txt"
 
@@ -133,11 +134,20 @@ export CROSS_COMPILE_ARM32=$GCC_PREFIX32
 VALUES="OBJCOPY=llvm-objcopy \
         OBJDUMP=llvm-objdump \
         STRIP=llvm-strip \
-	NM=llvm-nm \
+	    NM=llvm-nm \
         AR=llvm-ar \
-	AS=llvm-as"
+	    AS=llvm-as \
+	    LD=ld.lld"
 fi
 
+
+######################
+#=[ START OF BUILD ]=#
+######################
+
+
+if [ "$ONLY_BUILD_AN" -eq "1" ]
+then
 
 if [ "$ONLY_BUILD_KH" -eq "1" ]
 then
@@ -226,7 +236,7 @@ then
 	CROSS_COMPILE=${CROSS_COMPILE} \
 	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
 	ARCH=${ARCH} \
-    	${JOBS}
+    ${JOBS}
 
 
 ####---------####
@@ -234,7 +244,7 @@ then
 ####---------####
 else
 
-   make $DEFCONFIG prepare modules_prepare vdso_prepare \
+   	make $DEFCONFIG prepare modules_prepare vdso_prepare \
 	CC=${CC} \
 	PATH=${PATH} \
 	CLANG_TRIPLE=${CLANG_TRIPLE} \
@@ -242,7 +252,7 @@ else
 	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
 	ARCH=${ARCH} \
 	${JOBS} \
-    	$VALUES
+    $VALUES
 
 
 fi
@@ -309,7 +319,7 @@ if [ "$GCC_or_CLANG" -eq "1" ]
 then
 
 
-	make modules_install \
+	    make modules_install \
         CC=${CC} \
         PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
@@ -317,9 +327,9 @@ then
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         INSTALL_MOD_DIR=. \
-	${JOBS}
+	    ${JOBS}
 
- 	KERNEL_NAME=$(make kernelrelease \
+ 	    KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
         PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
@@ -327,7 +337,7 @@ then
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         INSTALL_MOD_PATH=. \
-	${JOBS})
+	    ${JOBS})
 
 
 ####---------####
@@ -336,7 +346,7 @@ then
 else
 
 
-	make modules_install \
+	    make modules_install \
         CC=${CC} \
         PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
@@ -345,10 +355,10 @@ else
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         INSTALL_MOD_DIR=. \
-	${JOBS} \
-	$VALUES
+	    ${JOBS} \
+	    $VALUES
 
-	KERNEL_NAME=$(make kernelrelease \
+	    KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
         PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
@@ -357,8 +367,7 @@ else
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         ${JOBS} \
-        INSTALL_MOD_PATH=. \
-	$VALUES)
+	    $VALUES)
 
 fi
 
@@ -367,8 +376,8 @@ fi
 
 
 cd ${UN}/${NKD}/${OUT_DIR}
-rm lib/modules/${KERNEL_NAME}/build
-rm lib/modules/${KERNEL_NAME}/source
+rm $(find lib/modules/ -name build)
+rm $(find lib/modules/ -name source)
 cp lib/modules/ -r ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/lib/
 cd firmware
 cp $(find -name *.bin) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
@@ -380,10 +389,11 @@ cd ..
 #===( EDITABLE )===#
 
 
-cp $(find -name Image.gz-dtb) ${ANYKERNEL_DIR}/
+cp $(find -name Image-dtb) ${ANYKERNEL_DIR}/
+#cp $(find -name Image.gz-dtb) ${ANYKERNEL_DIR}/
 #cp $(find -name Image.gz) ${ANYKERNEL_DIR}/
 #cp $(find -name dtb) ${ANYKERNEL_DIR}/
-cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
+#cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
 
 
 #===[ ZIPPING ]===#
@@ -393,9 +403,7 @@ cd ${ANYKERNEL_DIR}
 zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
 
 
-######################
 #===[ TIME BUILD ]===#
-######################
 
 
 BUILD_END=$(date +"%s")
@@ -427,7 +435,7 @@ if [ "$GCC_or_CLANG" -eq "1" ]
 then
 
 
-	make modules_install \
+	    make modules_install \
         CC=${CC} \
         PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
@@ -435,9 +443,9 @@ then
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         INSTALL_MOD_DIR=. \
-	${JOBS}
+	    ${JOBS}
 
-	KERNEL_NAME=$(make kernelrelease \
+	    KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
         PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
@@ -445,7 +453,7 @@ then
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         INSTALL_MOD_PATH=. \
-	${JOBS})
+	    ${JOBS})
 
 
 ####---------####
@@ -454,7 +462,7 @@ then
 else
 
 
-	make modules_install \
+	    make modules_install \
         CC=${CC} \
         PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
@@ -463,10 +471,10 @@ else
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         INSTALL_MOD_DIR=. \
-	${JOBS} \
+	    ${JOBS} \
         $VALUES
 
-	KERNEL_NAME=$(make kernelrelease \
+	    KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
         PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
@@ -476,7 +484,7 @@ else
         O=${OUT_DIR} \
         ${JOBS} \
         INSTALL_MOD_PATH=. \
-	$VALUES)
+	    $VALUES)
 
 fi
 
@@ -485,8 +493,8 @@ fi
 
 
 cd ${UN}/${NKD}/${OUT_DIR}
-rm lib/modules/${KERNEL_NAME}/build
-rm lib/modules/${KERNEL_NAME}/source
+rm $(find lib/modules/ -name build)
+rm $(find lib/modules/ -name source)
 cp lib/modules/ -r ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/lib/
 cd firmware
 cp $(find -name *.bin) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
@@ -498,10 +506,11 @@ cd ..
 #===( EDITABLE )===#
 
 
-cp $(find -name Image.gz-dtb) ${ANYKERNEL_DIR}/
+cp $(find -name Image-dtb) ${ANYKERNEL_DIR}/
+#cp $(find -name Image.gz-dtb) ${ANYKERNEL_DIR}/
 #cp $(find -name Image.gz) ${ANYKERNEL_DIR}/
 #cp $(find -name dtb) ${ANYKERNEL_DIR}/
-cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
+#cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
 
 
 #===[ ZIPPING ]===#
@@ -511,9 +520,9 @@ cd ${ANYKERNEL_DIR}
 zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
 
 
-######################
+
 #===[ TIME BUILD ]===#
-######################
+
 
 
 BUILD_END=$(date +"%s")
@@ -533,8 +542,6 @@ fi
 #####################################
 #===[ ONLY BUILD KERNEL HEADERS ]===#
 #####################################
-
-
 
 else
 
@@ -568,7 +575,7 @@ then
 	CROSS_COMPILE=${CROSS_COMPILE} \
 	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
 	ARCH=${ARCH} \
-    	${JOBS}
+    ${JOBS}
 
 
 ####---------####
@@ -584,7 +591,7 @@ else
 	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
 	ARCH=${ARCH} \
 	${JOBS} \
-    	$VALUES
+    $VALUES
 
 
 fi
@@ -633,3 +640,124 @@ echo -e "$blue kernel-headers compiled on $(($DIFF / 60)) minute(s) and $(($DIFF
 
 fi
 
+
+
+################################
+#===[ ONLY_BUILD_ANYKERNEL ]===#
+################################
+
+else 
+
+echo -e "$yellow\n ##============================================================================##"
+echo -e " ##===================== Creating A Flashable *.zip Archive ===================##"
+echo -e " ##============================================================================##$nocol\n"
+
+
+cd ${UN}/${NKD}
+
+rm -rf ${ANYKERNEL_DIR}
+
+cp ${UN}/${ANYKERNEL_DIR} ${UN}/${NKD} -r
+
+
+if [ "$GCC_or_CLANG" -eq "1" ]
+####-------####
+#===[ GCC ]===#
+####-------####
+then
+
+
+	    make modules_install \
+        CC=${CC} \
+        PATH=${PATH} \
+        CROSS_COMPILE=${CROSS_COMPILE} \
+        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
+        ARCH=${ARCH} \
+        O=${OUT_DIR} \
+        INSTALL_MOD_DIR=. \
+	    ${JOBS}
+
+	    KERNEL_NAME=$(make kernelrelease \
+        CC=${CC} \
+        PATH=${PATH} \
+        CROSS_COMPILE=${CROSS_COMPILE} \
+        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
+        ARCH=${ARCH} \
+        O=${OUT_DIR} \
+        INSTALL_MOD_PATH=. \
+	    ${JOBS})
+
+
+####---------####
+#===[ Clang ]===#
+####---------####
+else
+
+
+	make modules_install \
+        CC=${CC} \
+        PATH=${PATH} \
+        CLANG_TRIPLE=${CLANG_TRIPLE} \
+        CROSS_COMPILE=${CROSS_COMPILE} \
+        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
+        ARCH=${ARCH} \
+        O=${OUT_DIR} \
+        INSTALL_MOD_DIR=. \
+	${JOBS} \
+        $VALUES
+
+	KERNEL_NAME=$(make kernelrelease \
+        CC=${CC} \
+        PATH=${PATH} \
+        CLANG_TRIPLE=${CLANG_TRIPLE} \
+        CROSS_COMPILE=${CROSS_COMPILE} \
+        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
+        ARCH=${ARCH} \
+        O=${OUT_DIR} \
+        ${JOBS} \
+	$VALUES)
+
+fi
+
+
+#===[ COPYNG ]===#
+
+
+cd ${UN}/${NKD}/${OUT_DIR}
+rm $(find lib/modules/ -name build)
+rm $(find lib/modules/ -name source)
+cp lib/modules/ -r ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/lib/
+cd firmware
+cp $(find -name *.bin) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
+cp $(find -name *.fw) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
+cd ..
+cd ..
+
+
+#===( EDITABLE )===#
+
+
+cp $(find -name Image-dtb) ${ANYKERNEL_DIR}/
+#cp $(find -name Image.gz-dtb) ${ANYKERNEL_DIR}/
+#cp $(find -name Image.gz) ${ANYKERNEL_DIR}/
+#cp $(find -name dtb) ${ANYKERNEL_DIR}/
+#cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
+
+
+#===[ ZIPPING ]===#
+
+
+cd ${ANYKERNEL_DIR}
+zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
+
+
+
+#===[ TIME BUILD ]===#
+
+
+
+BUILD_END=$(date +"%s")
+DIFF=$(($BUILD_END - $BUILD_START))
+echo -e "$blue Kernel compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
+
+fi
