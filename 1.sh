@@ -30,28 +30,29 @@ echo -e "$red\n ##--------------------------------------------------------------
 
 #===[ Most Editable ]===#
 
-export DEFCONFIG=akame_defconfig
-export NKD=AkameKernel-ginkgo
-export CODENAME=ginkgo
-GCC_or_CLANG=2 #1 - GCC, 2 - CLANG
+export DEFCONFIG=alucard_defconfig
+export NKD=cheeseburger-n
+export CODENAME=cheeseburger
+GCC_or_CLANG=1 #1 - GCC, 2 - CLANG
 BUILD_KH=2 #1 - ENABLE, 2 - DISABLE
-ONLY_BUILD_KH=2 #1 - DISABLE, 2 - ENABLE
+ONLY_BUILD_KH=1 #1 - DISABLE, 2 - ENABLE
 
 
 #===[ Editable ]===#
 
-export SUBARCH=$ARCH
 export USE_CCACHE=1
 export CCACHE_DIR=~/.ccache
-export JOBS="-j8"
+export JOBS="-j14"
 
 #===[ Standart ]===#
 
 export ANYKERNEL_DIR=AnyKernel3
 export OUT_DIR=out
 export ARCH=arm64
-export UN=$HOME
+export SUBARCH=$ARCH
+export UN=$HOME/kernels
 export CONFIG=".config"
+export LOG="2>&1 | tee log.txt"
 
 #########################
 #===[ Smart Exports ]===#
@@ -62,12 +63,13 @@ if [ "$GCC_or_CLANG" -eq "1" ]
 ####-------####
 #===[ GCC ]===#
 ####-------####
-then	
+then
 
 #===[ Most Editable ]===#
 
+export CC=gcc
 GCC_PATH64=/usr
-GCC_PATH32=/usr      	
+GCC_PATH32=/usr
 GCC_BIN64=$GCC_PATH64/bin
 GCC_BIN32=$GCC_PATH32/bin
 
@@ -78,8 +80,8 @@ GCC_PREF64=aarch64-linux-gnu
 GCC_PREF32=arm-linux-gnueabi
 GCC_PREFIX64=aarch64-linux-gnu-
 GCC_PREFIX32=arm-linux-gnueabi-
-GCC_LIB32=$GCC_PATH32/lib/$GCC_PREF32	
-GCC_LIB64=$GCC_PATH64/lib/$GCC_PREF64	
+GCC_LIB32=$GCC_PATH32/lib/$GCC_PREF32
+GCC_LIB64=$GCC_PATH64/lib/$GCC_PREF64
 
 #===[ Standart ]===#
 
@@ -94,12 +96,14 @@ export CROSS_COMPILE_ARM32=$GCC_PREFIX32
 ####---------####
 #===[ Clang ]===#
 ####---------####
-else	
+else
 
 #===[ Most Editable ]===#
 
+export CC=clang
+LLVM=llvm-11
 CLANG_PATH=/usr
-CLANG_BIN=$CLANG_PATH/lib/llvm-11/bin
+CLANG_BIN=$CLANG_PATH/lib/${LLVM}/bin
 GCC_PATH64=/usr
 GCC_PATH32=/usr
 GCC_BIN64=$GCC_PATH64/bin
@@ -107,12 +111,12 @@ GCC_BIN32=$GCC_PATH32/bin
 
 #===[ Editable ]===#
 
-GCC_PREF64=aarch64-linux-gnu          
-GCC_PREF32=arm-linux-gnueabi           
-GCC_PREFIX64=aarch64-linux-gnu-			
+GCC_PREF64=aarch64-linux-gnu
+GCC_PREF32=arm-linux-gnueabi
+GCC_PREFIX64=aarch64-linux-gnu-
 GCC_PREFIX32=arm-linux-gnueabi-
-CLANG_LIB32=$CLANG_PATH/lib/llvm-11/lib
-CLANG_LIB64=$CLANG_PATH/lib/llvm-11/lib64
+CLANG_LIB32=$CLANG_PATH/lib/${LLVM}/lib
+CLANG_LIB64=$CLANG_PATH/lib/${LLVM}/lib64
 GCC_LIB64=$GCC_PATH64/lib/$GCC_PREF64
 GCC_LIB32=$GCC_PATH32/lib/$GCC_PREF32
 
@@ -129,9 +133,9 @@ export CROSS_COMPILE_ARM32=$GCC_PREFIX32
 VALUES="OBJCOPY=llvm-objcopy \
         OBJDUMP=llvm-objdump \
         STRIP=llvm-strip \
-	    NM=llvm-nm \
+	NM=llvm-nm \
         AR=llvm-ar \
-	    AS=llvm-as"
+	AS=llvm-as"
 fi
 
 
@@ -146,28 +150,30 @@ if [ "$GCC_or_CLANG" -eq "1" ]
 ####-------####
 #===[ GCC ]===#
 ####-------####
-then	
+then
 
 
-    make $DEFCONFIG all dtbo.img firmware_install modules_install \
-	CC=gcc \
+    make $DEFCONFIG all modules_install firmware_install dtbo.img \
+	CC=${CC} \
 	PATH=${PATH} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
 	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
 	ARCH=${ARCH} \
 	O=${OUT_DIR} \
 	INSTALL_MOD_PATH=. \
-	${JOBS}
-	
-	
+	INSTALL_MOD_DIR=. \
+	${JOBS} \
+	${LOG}
+
+
 ####---------####
 #===[ Clang ]===#
 ####---------####
-else	
+else
 
 
-	sudo make $DEFCONFIG all firmware_install modules_install dtbo.img \
-	CC=clang \
+	sudo make $DEFCONFIG all modules_install firmware_install dtbo.img \
+	CC=${CC} \
 	PATH=${PATH} \
 	CLANG_TRIPLE=${CLANG_TRIPLE} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
@@ -175,8 +181,10 @@ else
 	ARCH=${ARCH} \
 	O=${OUT_DIR} \
 	${JOBS} \
-    INSTALL_MOD_PATH=. \
-    $VALUES
+	INSTALL_MOD_PATH=. \
+	INSTALL_MOD_DIR=. \
+	$VALUES \
+	${LOG}
 fi
 
 
@@ -193,17 +201,17 @@ echo -e "$yellow\n ##===========================================================
 echo -e " ##=========================== Build Kernel Headers ===========================##"
 echo -e " ##============================================================================##$nocol\n"
 
-sudo rm -rf /${UN}/kernel-headers/kernel-headers/
+sudo rm -rf ${UN}/kernel-headers/kernel-headers/
 
-sudo rm -rf /${UN}/tmp 
+sudo rm -rf ${UN}/tmp
 
-rm -rf /${UN}/kernel-headers-${CODENAME}.tar.xz
+rm -rf ${UN}/kernel-headers-${CODENAME}.tar.xz
 
-mkdir /${UN}/kernel-headers/kernel-headers/
+mkdir ${UN}/kernel-headers/kernel-headers/
 
-cp -r * /${UN}/kernel-headers/kernel-headers/
+cp -r * ${UN}/kernel-headers/kernel-headers/
 
-cd /${UN}/kernel-headers/kernel-headers/
+cd ${UN}/kernel-headers/kernel-headers/
 
 
 if [ "$GCC_or_CLANG" -eq "1" ]
@@ -213,7 +221,7 @@ if [ "$GCC_or_CLANG" -eq "1" ]
 then
 
 	make $DEFCONFIG prepare modules_prepare vdso_prepare \
-	CC=gcc \
+	CC=${CC} \
 	PATH=${PATH} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
 	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
@@ -226,8 +234,8 @@ then
 ####---------####
 else
 
-   make $DEFCONFIG  prepare modules_prepare vdso_prepare \
-	CC=clang \
+   make $DEFCONFIG prepare modules_prepare vdso_prepare \
+	CC=${CC} \
 	PATH=${PATH} \
 	CLANG_TRIPLE=${CLANG_TRIPLE} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
@@ -239,37 +247,37 @@ else
 
 fi
 
-mkdir /${UN}/tmp
+mkdir ${UN}/tmp
 
 KN=$(find ${OUT_DIR}/lib/modules/ -name modules.*)
 
 cp -r arch/arm* Makefile ${OUT_DIR}/Module.symvers ${KN} ${OUT_DIR}/scripts/mod/modpost ${OUT_DIR}/scripts/genksyms/genksyms  include scripts drivers/misc /${UN}/tmp 
 
-rm -rf * 
+rm -rf *
 
-cp -r /${UN}/tmp/* $PWD 
+cp -r ${UN}/tmp/* $PWD
 
 mv modpost scripts/mod/
 
 mv genksyms scripts/genksyms/
 
-rm -rf /${UN}/tmp 
+rm -rf ${UN}/tmp
 
-mkdir arch 
+mkdir arch
 
-cp -r arm* arch 
+cp -r arm* arch
 
-rm -rf arm* 
+rm -rf arm*
 
-mkdir drivers 
+mkdir drivers
 
-cp -r misc drivers 
+cp -r misc drivers
 
 rm -rf misc
 
-cd /${UN}/kernel-headers/kernel-headers/
+cd ${UN}/kernel-headers/kernel-headers/
 
-cd /$UN/
+cd $UN/
 
 sudo dpkg-deb --build kernel-headers kernel-headers-${CODENAME}.deb
 
@@ -287,39 +295,61 @@ echo -e " ##===================== Creating A Flashable *.zip Archive ===========
 echo -e " ##============================================================================##$nocol\n"
 
 
-cd /${UN}/${NKD}
+cd ${UN}/${NKD}
 
 rm -rf ${ANYKERNEL_DIR}
 
-cp /${UN}/${ANYKERNEL_DIR} /${UN}/${NKD} -r
+cp ${UN}/${ANYKERNEL_DIR} ${UN}/${NKD} -r
 
-	
+
 if [ "$GCC_or_CLANG" -eq "1" ]
 ####-------####
 #===[ GCC ]===#
 ####-------####
-then	
+then
 
 
-    KERNEL_NAME=$(make kernelrelease \
-        CC=gcc
+	make modules_install \
+        CC=${CC} \
+        PATH=${PATH} \
+        CROSS_COMPILE=${CROSS_COMPILE} \
+        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
+        ARCH=${ARCH} \
+        O=${OUT_DIR} \
+        INSTALL_MOD_DIR=. \
+	${JOBS}
+
+ 	KERNEL_NAME=$(make kernelrelease \
+        CC=${CC} \
         PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         INSTALL_MOD_PATH=. \
-        ${JOBS} | grep +)
-	
-	
+	${JOBS})
+
+
 ####---------####
 #===[ Clang ]===#
 ####---------####
-else	
+else
 
-    
-    KERNEL_NAME=$(make kernelrelease \
-        CC=clang \
+
+	make modules_install \
+        CC=${CC} \
+        PATH=${PATH} \
+        CLANG_TRIPLE=${CLANG_TRIPLE} \
+        CROSS_COMPILE=${CROSS_COMPILE} \
+        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
+        ARCH=${ARCH} \
+        O=${OUT_DIR} \
+        INSTALL_MOD_DIR=. \
+	${JOBS} \
+	$VALUES
+
+	KERNEL_NAME=$(make kernelrelease \
+        CC=${CC} \
         PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
         CROSS_COMPILE=${CROSS_COMPILE} \
@@ -328,56 +358,49 @@ else
         O=${OUT_DIR} \
         ${JOBS} \
         INSTALL_MOD_PATH=. \
-        $VALUES | grep +)
+	$VALUES)
+
 fi
-
-
-        
-
-
-mkdir -p ${ANYKERNEL_DIR}/modules/system/lib/modules/${KERNEL_NAME}/kernel
-mkdir -p ${ANYKERNEL_DIR}/modules/system/etc/firmware
-
-
-cd /${UN}/${NKD}
 
 
 #===[ COPYNG ]===#
 
 
-cd ${OUT_DIR} && cp $(find -name *.ko) --parents ../${ANYKERNEL_DIR}/modules/system/lib/modules/${KERNEL_NAME}/kernel
+cd ${UN}/${NKD}/${OUT_DIR}
+rm lib/modules/${KERNEL_NAME}/build
+rm lib/modules/${KERNEL_NAME}/source
+cp lib/modules/ -r ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/lib/
 cd firmware
 cp $(find -name *.bin) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
 cp $(find -name *.fw) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
 cd ..
-cp modules.* ../${ANYKERNEL_DIR}/modules/system/lib/modules/ 
-cd .. 
-cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
+cd ..
 
 
-#===[ EDITABLE ]===#
+#===( EDITABLE )===#
+
 
 cp $(find -name Image.gz-dtb) ${ANYKERNEL_DIR}/
-#cp $(find -name Image.gz) ${ANYKERNEL_DIR}
-#cp $(find -name dtb) ${ANYKERNEL_DIR}
+#cp $(find -name Image.gz) ${ANYKERNEL_DIR}/
+#cp $(find -name dtb) ${ANYKERNEL_DIR}/
+cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
 
 
 #===[ ZIPPING ]===#
 
-rm -rf ${ANYKERNEL_DIR}/modules/system/lib/modules/${KERNEL_NAME}/kernel/lib/
 
-cd ${ANYKERNEL_DIR} && zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
+cd ${ANYKERNEL_DIR}
+zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
+
 
 ######################
 #===[ TIME BUILD ]===#
 ######################
 
+
 BUILD_END=$(date +"%s")
 DIFF=$(($BUILD_END - $BUILD_START))
 echo -e "$blue Kernel compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
-
-
-
 
 
 #################
@@ -390,38 +413,61 @@ echo -e " ##===================== Creating A Flashable *.zip Archive ===========
 echo -e " ##============================================================================##$nocol\n"
 
 
-cd /${UN}/${NKD}
+cd ${UN}/${NKD}
 
 rm -rf ${ANYKERNEL_DIR}
 
-cp /${UN}/${ANYKERNEL_DIR} /${UN}/${NKD} -r
+cp ${UN}/${ANYKERNEL_DIR} ${UN}/${NKD} -r
 
-	
+
 if [ "$GCC_or_CLANG" -eq "1" ]
 ####-------####
 #===[ GCC ]===#
 ####-------####
-then	
+then
 
 
-    KERNEL_NAME=$(make kernelrelease \
-        CC=gcc
+	make modules_install \
+        CC=${CC} \
         PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
         ARCH=${ARCH} \
         O=${OUT_DIR} \
-        ${JOBS} | grep +)
-	
-	
+        INSTALL_MOD_DIR=. \
+	${JOBS}
+
+	KERNEL_NAME=$(make kernelrelease \
+        CC=${CC} \
+        PATH=${PATH} \
+        CROSS_COMPILE=${CROSS_COMPILE} \
+        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
+        ARCH=${ARCH} \
+        O=${OUT_DIR} \
+        INSTALL_MOD_PATH=. \
+	${JOBS})
+
+
 ####---------####
 #===[ Clang ]===#
 ####---------####
-else	
+else
 
-    
-    KERNEL_NAME=$(make kernelrelease \
-        CC=clang \
+
+	make modules_install \
+        CC=${CC} \
+        PATH=${PATH} \
+        CLANG_TRIPLE=${CLANG_TRIPLE} \
+        CROSS_COMPILE=${CROSS_COMPILE} \
+        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
+        ARCH=${ARCH} \
+        O=${OUT_DIR} \
+        INSTALL_MOD_DIR=. \
+	${JOBS} \
+        $VALUES
+
+	KERNEL_NAME=$(make kernelrelease \
+        CC=${CC} \
         PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
         CROSS_COMPILE=${CROSS_COMPILE} \
@@ -429,50 +475,46 @@ else
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         ${JOBS} \
-        $VALUES | grep +)
+        INSTALL_MOD_PATH=. \
+	$VALUES)
+
 fi
-
-
-        
-
-
-mkdir -p ${ANYKERNEL_DIR}/modules/system/lib/modules/${KERNEL_NAME}/kernel
-mkdir -p ${ANYKERNEL_DIR}/modules/system/etc/firmware
-
-
-cd /${UN}/${NKD}
 
 
 #===[ COPYNG ]===#
 
 
-cd ${OUT_DIR} && cp $(find -name *.ko) --parents ../${ANYKERNEL_DIR}/modules/system/lib/modules/${KERNEL_NAME}/kernel
+cd ${UN}/${NKD}/${OUT_DIR}
+rm lib/modules/${KERNEL_NAME}/build
+rm lib/modules/${KERNEL_NAME}/source
+cp lib/modules/ -r ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/lib/
 cd firmware
 cp $(find -name *.bin) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
 cp $(find -name *.fw) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
 cd ..
-cp modules.* ../${ANYKERNEL_DIR}/modules/system/lib/modules/
 cd ..
 
-cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
 
+#===( EDITABLE )===#
 
-#===[ EDITABLE ]===#
 
 cp $(find -name Image.gz-dtb) ${ANYKERNEL_DIR}/
 #cp $(find -name Image.gz) ${ANYKERNEL_DIR}/
 #cp $(find -name dtb) ${ANYKERNEL_DIR}/
+cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
 
 
 #===[ ZIPPING ]===#
 
-rm -rf ${ANYKERNEL_DIR}/modules/system/lib/modules/${KERNEL_NAME}/kernel/lib/
 
-cd ${ANYKERNEL_DIR} && zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
+cd ${ANYKERNEL_DIR}
+zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
+
 
 ######################
 #===[ TIME BUILD ]===#
 ######################
+
 
 BUILD_END=$(date +"%s")
 DIFF=$(($BUILD_END - $BUILD_START))
@@ -501,17 +543,17 @@ echo -e "$yellow\n ##===========================================================
 echo -e " ##=========================== Build Kernel Headers ===========================##"
 echo -e " ##============================================================================##$nocol\n"
 
-sudo rm -rf /${UN}/kernel-headers/kernel-headers/
+sudo rm -rf ${UN}/kernel-headers/kernel-headers/
 
-sudo rm -rf /${UN}/tmp 
+sudo rm -rf ${UN}/tmp
 
-rm -rf /${UN}/kernel-headers-${CODENAME}.tar.xz
+rm -rf ${UN}/kernel-headers-${CODENAME}.tar.xz
 
-mkdir /${UN}/kernel-headers/kernel-headers/
+mkdir ${UN}/kernel-headers/kernel-headers/
 
-cp -r * /${UN}/kernel-headers/kernel-headers/
+cp -r * ${UN}/kernel-headers/kernel-headers/
 
-cd /${UN}/kernel-headers/kernel-headers/
+cd ${UN}/kernel-headers/kernel-headers/
 
 
 if [ "$GCC_or_CLANG" -eq "1" ]
@@ -521,7 +563,7 @@ if [ "$GCC_or_CLANG" -eq "1" ]
 then
 
 	make $DEFCONFIG prepare modules_prepare vdso_prepare \
-	CC=gcc \
+	CC=${CC} \
 	PATH=${PATH} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
 	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
@@ -535,7 +577,7 @@ then
 else
 
    make $DEFCONFIG  prepare modules_prepare vdso_prepare \
-	CC=clang \
+	CC=${CC} \
 	PATH=${PATH} \
 	CLANG_TRIPLE=${CLANG_TRIPLE} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
@@ -547,37 +589,37 @@ else
 
 fi
 
-mkdir /${UN}/tmp
+mkdir ${UN}/tmp
 
 KN=$(find ${OUT_DIR}/lib/modules/ -name modules.*)
 
 cp -r arch/arm* Makefile ${OUT_DIR}/Module.symvers ${KN} ${OUT_DIR}/scripts/mod/modpost ${OUT_DIR}/scripts/genksyms/genksyms  include scripts drivers/misc /${UN}/tmp 
 
-rm -rf * 
+rm -rf *
 
-cp -r /${UN}/tmp/* $PWD 
+cp -r ${UN}/tmp/* $PWD
 
 mv modpost scripts/mod/
 
 mv genksyms scripts/genksyms/
 
-rm -rf /${UN}/tmp 
+rm -rf ${UN}/tmp
 
-mkdir arch 
+mkdir arch
 
-cp -r arm* arch 
+cp -r arm* arch
 
-rm -rf arm* 
+rm -rf arm*
 
-mkdir drivers 
+mkdir drivers
 
-cp -r misc drivers 
+cp -r misc drivers
 
 rm -rf misc
 
-cd /${UN}/kernel-headers/kernel-headers/
+cd ${UN}/kernel-headers/kernel-headers/
 
-cd /$UN/
+cd $UN/
 
 sudo dpkg-deb --build kernel-headers kernel-headers-${CODENAME}.deb
 
@@ -590,10 +632,4 @@ echo -e "$blue kernel-headers compiled on $(($DIFF / 60)) minute(s) and $(($DIFF
 
 
 fi
-
-fi
-
-
-
-
 
