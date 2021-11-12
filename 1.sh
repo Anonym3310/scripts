@@ -31,12 +31,13 @@ echo -e "$red\n ##--------------------------------------------------------------
 #===[ Most Editable ]===#
 
 export DEFCONFIG=akame-raphael_defconfig
-export NKD=sm8150                               #kernel dir name
+export NKD=AkameKernel-sm8150                            #kernel dir name
 export CODENAME=raphael
 GCC_or_CLANG=2                                  #1 - GCC, 2 - CLANG      | use gcc or clang
 BUILD_KH=2                                      #1 - ENABLE, 2 - DISABLE | make kernel headers
-ONLY_BUILD_KH=2                                 #1 - DISABLE, 2 - ENABLE | make only kernel headers
+ONLY_BUILD_KH=1                                 #1 - DISABLE, 2 - ENABLE | make only kernel headers
 ONLY_BUILD_AN=1                                 #1 - DISABLE, 2 - ENABLE | make only AnyKernel
+IMAGE=Image-dtb				# Image.gz-dtb Image Image.gz Image-dtb
 
 
 #===[ Editable ]===#
@@ -54,6 +55,7 @@ export SUBARCH=$ARCH
 export UN=$HOME/kernels                         #path to the kernel folder
 export CONFIG=".config"
 export LOG="2>&1 | tee log.txt"
+
 
 #########################
 #===[ Smart Exports ]===#
@@ -101,10 +103,11 @@ else
 
 #===[ Most Editable ]===#
 
-export CC=clang
-LLVM=llvm-11
-CLANG_PATH=/usr
-CLANG_BIN=$CLANG_PATH/lib/${LLVM}/bin
+VER="-11"
+export CC=clang${VER}
+LLVM=llvm${VER}
+CLANG_PATH1=/usr
+CLANG_BIN=$CLANG_PATH1/lib/${LLVM}/bin
 GCC_PATH64=/usr
 GCC_PATH32=/usr
 GCC_BIN64=$GCC_PATH64/bin
@@ -116,8 +119,8 @@ GCC_PREF64=aarch64-linux-gnu
 GCC_PREF32=arm-linux-gnueabi
 GCC_PREFIX64=aarch64-linux-gnu-
 GCC_PREFIX32=arm-linux-gnueabi-
-CLANG_LIB32=$CLANG_PATH/lib/${LLVM}/lib
-CLANG_LIB64=$CLANG_PATH/lib/${LLVM}/lib64
+CLANG_LIB32=$CLANG_PATH1/lib/${LLVM}/lib
+CLANG_LIB64=$CLANG_PATH1/lib/${LLVM}/lib64
 GCC_LIB64=$GCC_PATH64/lib/$GCC_PREF64
 GCC_LIB32=$GCC_PATH32/lib/$GCC_PREF32
 
@@ -127,17 +130,18 @@ GCC_BINS=$GCC_BIN64:$GCC_BIN32
 GCC_LIBS=$GCC_LIB64:$GCC_LIB32
 CLANG_LIBS=$CLANG_LIB64:$CLANG_LIB32
 export LD_LIBRARY_PATH=$CLANG_LIBS:$GCC_LIBS:$LD_LIBRARY_PATH
-export PATH=$CLANG_BIN:$GCC_BINS:$PATH
+export CLANG_PATH=${CLANG_BIN}
+export PATH=${CLANG_PATH}:${PATH}
 export CROSS_COMPILE=$GCC_PREFIX64
 export CLANG_TRIPLE=$GCC_PREFIX64
 export CROSS_COMPILE_ARM32=$GCC_PREFIX32
-VALUES="OBJCOPY=llvm-objcopy \
-        OBJDUMP=llvm-objdump \
-        STRIP=llvm-strip \
-	    NM=llvm-nm \
-        AR=llvm-ar \
-	    AS=llvm-as \
-	    LD=ld.lld"
+VALUES="OBJCOPY=llvm-objcopy${VER} \
+        OBJDUMP=llvm-objdump${VER} \
+        STRIP=llvm-strip${VER} \
+	NM=llvm-nm${VER} \
+        AR=llvm-ar${VER} \
+	AS=llvm-as${VER} \
+	LD=ld.bfd"
 fi
 
 
@@ -389,16 +393,14 @@ cd ..
 #===( EDITABLE )===#
 
 
-cp $(find -name Image-dtb) ${ANYKERNEL_DIR}/
-#cp $(find -name Image.gz-dtb) ${ANYKERNEL_DIR}/
-#cp $(find -name Image.gz) ${ANYKERNEL_DIR}/
-#cp $(find -name dtb) ${ANYKERNEL_DIR}/
-#cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
+cp $(find -name ${IMAGE}) ${ANYKERNEL_DIR}/
+cp $(find -name dtb) ${ANYKERNEL_DIR}/
+cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
 
 
 #===[ ZIPPING ]===#
 
-
+cp -r AK3/* ${ANYKERNEL_DIR}
 cd ${ANYKERNEL_DIR}
 zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
 
@@ -506,16 +508,15 @@ cd ..
 #===( EDITABLE )===#
 
 
-cp $(find -name Image-dtb) ${ANYKERNEL_DIR}/
-#cp $(find -name Image.gz-dtb) ${ANYKERNEL_DIR}/
-#cp $(find -name Image.gz) ${ANYKERNEL_DIR}/
-#cp $(find -name dtb) ${ANYKERNEL_DIR}/
-#cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
+cp $(find -name ${IMAGE}) ${ANYKERNEL_DIR}/
+cp $(find -name dtb) ${ANYKERNEL_DIR}/
+cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
 
 
 #===[ ZIPPING ]===#
 
 
+cp -r AK3/* ${ANYKERNEL_DIR}
 cd ${ANYKERNEL_DIR}
 zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
 
@@ -737,16 +738,14 @@ cd ..
 #===( EDITABLE )===#
 
 
-cp $(find -name Image-dtb) ${ANYKERNEL_DIR}/
-#cp $(find -name Image.gz-dtb) ${ANYKERNEL_DIR}/
-#cp $(find -name Image.gz) ${ANYKERNEL_DIR}/
-#cp $(find -name dtb) ${ANYKERNEL_DIR}/
-#cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
+cp $(find -name ${IMAGE}) ${ANYKERNEL_DIR}/
+cp $(find -name dtb) ${ANYKERNEL_DIR}/
+cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
 
 
 #===[ ZIPPING ]===#
 
-
+cp -r AK3/* ${ANYKERNEL_DIR}
 cd ${ANYKERNEL_DIR}
 zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
 
