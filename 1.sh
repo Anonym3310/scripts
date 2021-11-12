@@ -188,6 +188,7 @@ else
 
 	sudo make $DEFCONFIG all modules_install firmware_install dtbo.img \
 	CC=${CC} \
+	CLANG_PATH=${CLANG_PATH} \
 	PATH=${PATH} \
 	CLANG_TRIPLE=${CLANG_TRIPLE} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
@@ -240,7 +241,7 @@ then
 	CROSS_COMPILE=${CROSS_COMPILE} \
 	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
 	ARCH=${ARCH} \
-    ${JOBS}
+    	${JOBS}
 
 
 ####---------####
@@ -250,13 +251,14 @@ else
 
    	make $DEFCONFIG prepare modules_prepare vdso_prepare \
 	CC=${CC} \
+	CLANG_PATH=${CLANG_PATH} \
 	PATH=${PATH} \
 	CLANG_TRIPLE=${CLANG_TRIPLE} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
 	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
 	ARCH=${ARCH} \
 	${JOBS} \
-    $VALUES
+    	$VALUES
 
 
 fi
@@ -335,7 +337,7 @@ then
 
  	    KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
-        PATH=${PATH} \
+	PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
         ARCH=${ARCH} \
@@ -352,7 +354,8 @@ else
 
 	    make modules_install \
         CC=${CC} \
-        PATH=${PATH} \
+        CLANG_PATH=${CLANG_PATH} \
+	PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
@@ -364,14 +367,15 @@ else
 
 	    KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
-        PATH=${PATH} \
+        CLANG_PATH=${CLANG_PATH} \
+	PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         ${JOBS} \
-	    $VALUES)
+	$VALUES)
 
 fi
 
@@ -449,7 +453,7 @@ then
 
 	    KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
-        PATH=${PATH} \
+	PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
         ARCH=${ARCH} \
@@ -466,7 +470,8 @@ else
 
 	    make modules_install \
         CC=${CC} \
-        PATH=${PATH} \
+        CLANG_PATH=${CLANG_PATH} \
+	PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
@@ -478,7 +483,8 @@ else
 
 	    KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
-        PATH=${PATH} \
+        CLANG_PATH=${CLANG_PATH} \
+	PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
@@ -586,6 +592,7 @@ else
 
    make $DEFCONFIG  prepare modules_prepare vdso_prepare \
 	CC=${CC} \
+	CLANG_PATH=${CLANG_PATH} \
 	PATH=${PATH} \
 	CLANG_TRIPLE=${CLANG_TRIPLE} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
@@ -680,7 +687,7 @@ then
 
 	    KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
-        PATH=${PATH} \
+	PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
         ARCH=${ARCH} \
@@ -697,7 +704,8 @@ else
 
 	make modules_install \
         CC=${CC} \
-        PATH=${PATH} \
+        CLANG_PATH=${CLANG_PATH} \
+	PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
@@ -709,7 +717,8 @@ else
 
 	KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
-        PATH=${PATH} \
+        CLANG_PATH=${CLANG_PATH} \
+	PATH=${PATH} \
         CLANG_TRIPLE=${CLANG_TRIPLE} \
         CROSS_COMPILE=${CROSS_COMPILE} \
         CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
