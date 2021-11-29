@@ -31,19 +31,19 @@ echo -e "$red\n ##--------------------------------------------------------------
 #===[ Most Editable ]===#
 
 export DEFCONFIG=akame-raphael_defconfig
-export NKD=AkameKernel-sm8150                            #kernel dir name
+export NKD=AkameKernel-sm8150
 export CODENAME=raphael
-GCC_or_CLANG=2                                  #1 - GCC, 2 - CLANG      | use gcc or clang
-BUILD_KH=2                                      #1 - ENABLE, 2 - DISABLE | make kernel headers
-ONLY_BUILD_KH=1                                 #1 - DISABLE, 2 - ENABLE | make only kernel headers
-ONLY_BUILD_AN=1                                 #1 - DISABLE, 2 - ENABLE | make only AnyKernel
-IMAGE=Image-dtb				# Image.gz-dtb Image Image.gz Image-dtb
+GCC_or_CLANG=2
+BUILD_KH=2
+ONLY_BUILD_KH=1
+ONLY_BUILD_AN=1
+IMAGE=Image-dtb
 
 
 #===[ Editable ]===#
 
-export USE_CCACHE=1
-export CCACHE_DIR=~/.ccache
+#export USE_CCACHE=1
+#export CCACHE_DIR=~/.ccache
 export JOBS="-j14"
 
 #===[ Standart ]===#
@@ -52,7 +52,7 @@ export ANYKERNEL_DIR=AnyKernel3
 export OUT_DIR=out
 export ARCH=arm64
 export SUBARCH=$ARCH
-export UN=$HOME/kernels                         #path to the kernel folder
+export UN=$HOME/kernels
 export CONFIG=".config"
 export LOG="2>&1 | tee log.txt"
 
@@ -141,7 +141,7 @@ VALUES="OBJCOPY=llvm-objcopy${VER} \
 	NM=llvm-nm${VER} \
         AR=llvm-ar${VER} \
 	AS=llvm-as${VER} \
-	LD=ld.bfd"
+	LD=ld.lld"
 fi
 
 
