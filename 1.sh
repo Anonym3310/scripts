@@ -145,6 +145,8 @@ VALUES="OBJCOPY=llvm-objcopy${VER} \
         AR=llvm-ar${VER} \
 	AS=llvm-as${VER} \
 	LD=ld.lld"
+export KBUILD_COMPILER_STRING="$(${CLANG_PATH} --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')"
+
 fi
 
 
