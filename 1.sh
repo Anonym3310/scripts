@@ -156,6 +156,7 @@ then
 if [ "$ONLY_BUILD_KH" -eq "1" ]
 then
 
+buildkernel(){
 echo -e "$yellow\n ##============================================================================##"
 echo -e " ##========================= Build Kernel From Source =========================##"
 echo -e " ##============================================================================##$nocol\n"
@@ -201,8 +202,9 @@ else
 	$VALUES \
 	${LOG}
 fi
+}
 
-
+buildkernel
 
 
 if [ "$BUILD_KH" -eq "1" ]
@@ -212,6 +214,7 @@ if [ "$BUILD_KH" -eq "1" ]
 #####################
 then
 
+buildkh(){
 echo -e "$yellow\n ##============================================================================##"
 echo -e " ##=========================== Build Kernel Headers ===========================##"
 echo -e " ##============================================================================##$nocol\n"
@@ -303,9 +306,12 @@ ls -l kernel-headers-${CODENAME}.deb
 BUILD_END=$(date +"%s")
 DIFF=$(($BUILD_END - $BUILD_START))
 echo -e "$blue kernel-headers compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
+}
+
+buildkh
 
 
-
+zipping(){
 echo -e "$yellow\n ##============================================================================##"
 echo -e " ##===================== Creating A Flashable *.zip Archive ===================##"
 echo -e " ##============================================================================##$nocol\n"
@@ -415,6 +421,9 @@ zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *pla
 BUILD_END=$(date +"%s")
 DIFF=$(($BUILD_END - $BUILD_START))
 echo -e "$blue Kernel compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
+}
+
+zipping
 
 
 #################
@@ -422,119 +431,7 @@ echo -e "$blue Kernel compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) 
 #################
 else
 
-echo -e "$yellow\n ##============================================================================##"
-echo -e " ##===================== Creating A Flashable *.zip Archive ===================##"
-echo -e " ##============================================================================##$nocol\n"
-
-
-cd ${UN}/${NKD}
-
-rm -rf ${ANYKERNEL_DIR}
-
-cp ${UN}/${ANYKERNEL_DIR} ${UN}/${NKD} -r
-
-
-if [ "$GCC_or_CLANG" -eq "1" ]
-####-------####
-#===[ GCC ]===#
-####-------####
-then
-
-
-	    make modules_install \
-        CC=${CC} \
-        PATH=${PATH} \
-        CROSS_COMPILE=${CROSS_COMPILE} \
-        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
-        ARCH=${ARCH} \
-        O=${OUT_DIR} \
-        INSTALL_MOD_DIR=. \
-	    ${JOBS}
-
-	    KERNEL_NAME=$(make kernelrelease \
-        CC=${CC} \
-	PATH=${PATH} \
-        CROSS_COMPILE=${CROSS_COMPILE} \
-        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
-        ARCH=${ARCH} \
-        O=${OUT_DIR} \
-        INSTALL_MOD_PATH=. \
-	    ${JOBS})
-
-
-####---------####
-#===[ Clang ]===#
-####---------####
-else
-
-
-	    make modules_install \
-        CC=${CC} \
-        CLANG_PATH=${CLANG_PATH} \
-	PATH=${PATH} \
-        CLANG_TRIPLE=${CLANG_TRIPLE} \
-        CROSS_COMPILE=${CROSS_COMPILE} \
-        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
-        ARCH=${ARCH} \
-        O=${OUT_DIR} \
-        INSTALL_MOD_DIR=. \
-	    ${JOBS} \
-        $VALUES
-
-	    KERNEL_NAME=$(make kernelrelease \
-        CC=${CC} \
-        CLANG_PATH=${CLANG_PATH} \
-	PATH=${PATH} \
-        CLANG_TRIPLE=${CLANG_TRIPLE} \
-        CROSS_COMPILE=${CROSS_COMPILE} \
-        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
-        ARCH=${ARCH} \
-        O=${OUT_DIR} \
-        ${JOBS} \
-        INSTALL_MOD_PATH=. \
-	    $VALUES)
-
-fi
-
-
-#===[ COPYNG ]===#
-
-
-cd ${UN}/${NKD}/${OUT_DIR}
-rm $(find lib/modules/ -name build)
-rm $(find lib/modules/ -name source)
-cp lib/modules/ -r ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/lib/
-cd firmware
-cp $(find -name *.bin) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
-cp $(find -name *.fw) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
-cd ..
-cd ..
-
-
-#===( EDITABLE )===#
-
-
-cp $(find -name ${IMAGE}) ${ANYKERNEL_DIR}/
-cp $(find -name dtb) ${ANYKERNEL_DIR}/
-cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
-
-
-#===[ ZIPPING ]===#
-
-
-cp -r AK3/* ${ANYKERNEL_DIR}
-cd ${ANYKERNEL_DIR}
-zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
-
-
-
-#===[ TIME BUILD ]===#
-
-
-
-BUILD_END=$(date +"%s")
-DIFF=$(($BUILD_END - $BUILD_START))
-echo -e "$blue Kernel compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
+zipping
 
 fi
 
@@ -553,97 +450,7 @@ fi
 else
 
 
-echo -e "$yellow\n ##============================================================================##"
-echo -e " ##=========================== Build Kernel Headers ===========================##"
-echo -e " ##============================================================================##$nocol\n"
-
-sudo rm -rf ${UN}/kernel-headers/kernel-headers/
-
-sudo rm -rf ${UN}/tmp
-
-rm -rf ${UN}/kernel-headers-${CODENAME}.tar.xz
-
-mkdir ${UN}/kernel-headers/kernel-headers/
-
-cp -r * ${UN}/kernel-headers/kernel-headers/
-
-cd ${UN}/kernel-headers/kernel-headers/
-
-
-if [ "$GCC_or_CLANG" -eq "1" ]
-####-------####
-#===[ GCC ]===#
-####-------####
-then
-
-	make $DEFCONFIG prepare modules_prepare vdso_prepare \
-	CC=${CC} \
-	PATH=${PATH} \
-	CROSS_COMPILE=${CROSS_COMPILE} \
-	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
-	ARCH=${ARCH} \
-    ${JOBS}
-
-
-####---------####
-#===[ Clang ]===#
-####---------####
-else
-
-   make $DEFCONFIG  prepare modules_prepare vdso_prepare \
-	CC=${CC} \
-	CLANG_PATH=${CLANG_PATH} \
-	PATH=${PATH} \
-	CLANG_TRIPLE=${CLANG_TRIPLE} \
-	CROSS_COMPILE=${CROSS_COMPILE} \
-	CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
-	ARCH=${ARCH} \
-	${JOBS} \
-    $VALUES
-
-
-fi
-
-mkdir ${UN}/tmp
-
-KN=$(find ${OUT_DIR}/lib/modules/ -name modules.*)
-
-cp -r arch/arm* Makefile ${OUT_DIR}/Module.symvers ${KN} ${OUT_DIR}/scripts/mod/modpost ${OUT_DIR}/scripts/genksyms/genksyms  include scripts drivers/misc /${UN}/tmp 
-
-rm -rf *
-
-cp -r ${UN}/tmp/* $PWD
-
-mv modpost scripts/mod/
-
-mv genksyms scripts/genksyms/
-
-rm -rf ${UN}/tmp
-
-mkdir arch
-
-cp -r arm* arch
-
-rm -rf arm*
-
-mkdir drivers
-
-cp -r misc drivers
-
-rm -rf misc
-
-cd ${UN}/kernel-headers/kernel-headers/
-
-cd $UN/
-
-sudo dpkg-deb --build kernel-headers kernel-headers-${CODENAME}.deb
-
-ls -l kernel-headers-${CODENAME}.deb
-
-
-BUILD_END=$(date +"%s")
-DIFF=$(($BUILD_END - $BUILD_START))
-echo -e "$blue kernel-headers compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
+buildkh
 
 
 fi
@@ -656,116 +463,6 @@ fi
 
 else 
 
-echo -e "$yellow\n ##============================================================================##"
-echo -e " ##===================== Creating A Flashable *.zip Archive ===================##"
-echo -e " ##============================================================================##$nocol\n"
-
-
-cd ${UN}/${NKD}
-
-rm -rf ${ANYKERNEL_DIR}
-
-cp ${UN}/${ANYKERNEL_DIR} ${UN}/${NKD} -r
-
-
-if [ "$GCC_or_CLANG" -eq "1" ]
-####-------####
-#===[ GCC ]===#
-####-------####
-then
-
-
-	    make modules_install \
-        CC=${CC} \
-        PATH=${PATH} \
-        CROSS_COMPILE=${CROSS_COMPILE} \
-        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
-        ARCH=${ARCH} \
-        O=${OUT_DIR} \
-        INSTALL_MOD_DIR=. \
-	    ${JOBS}
-
-	    KERNEL_NAME=$(make kernelrelease \
-        CC=${CC} \
-	PATH=${PATH} \
-        CROSS_COMPILE=${CROSS_COMPILE} \
-        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
-        ARCH=${ARCH} \
-        O=${OUT_DIR} \
-        INSTALL_MOD_PATH=. \
-	    ${JOBS})
-
-
-####---------####
-#===[ Clang ]===#
-####---------####
-else
-
-
-	make modules_install \
-        CC=${CC} \
-        CLANG_PATH=${CLANG_PATH} \
-	PATH=${PATH} \
-        CLANG_TRIPLE=${CLANG_TRIPLE} \
-        CROSS_COMPILE=${CROSS_COMPILE} \
-        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
-        ARCH=${ARCH} \
-        O=${OUT_DIR} \
-        INSTALL_MOD_DIR=. \
-	${JOBS} \
-        $VALUES
-
-	KERNEL_NAME=$(make kernelrelease \
-        CC=${CC} \
-        CLANG_PATH=${CLANG_PATH} \
-	PATH=${PATH} \
-        CLANG_TRIPLE=${CLANG_TRIPLE} \
-        CROSS_COMPILE=${CROSS_COMPILE} \
-        CROSS_COMPILE_ARM32=${CROSS_COMPILE_ARM32} \
-        ARCH=${ARCH} \
-        O=${OUT_DIR} \
-        ${JOBS} \
-	$VALUES)
-
-fi
-
-
-#===[ COPYNG ]===#
-
-
-cd ${UN}/${NKD}/${OUT_DIR}
-rm $(find lib/modules/ -name build)
-rm $(find lib/modules/ -name source)
-cp lib/modules/ -r ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/lib/
-cd firmware
-cp $(find -name *.bin) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
-cp $(find -name *.fw) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
-cd ..
-cd ..
-
-
-#===( EDITABLE )===#
-
-
-cp $(find -name ${IMAGE}) ${ANYKERNEL_DIR}/
-cp $(find -name dtb) ${ANYKERNEL_DIR}/
-cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
-
-
-#===[ ZIPPING ]===#
-
-cp -r AK3/* ${ANYKERNEL_DIR}
-cd ${ANYKERNEL_DIR}
-zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
-
-
-
-#===[ TIME BUILD ]===#
-
-
-
-BUILD_END=$(date +"%s")
-DIFF=$(($BUILD_END - $BUILD_START))
-echo -e "$blue Kernel compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
+zipping
 
 fi
