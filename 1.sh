@@ -171,7 +171,7 @@ if [ "$GCC_or_CLANG" -eq "1" ]
 then
 
 
-    make $DEFCONFIG all modules_install firmware_install dtbo.img \
+    	make $DEFCONFIG all modules_install firmware_install dtbo.img \
 	CC=${CC} \
 	PATH=${PATH} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
@@ -190,7 +190,7 @@ then
 else
 
 
-	sudo make $DEFCONFIG all modules_install firmware_install dtbo.img \
+	make $DEFCONFIG all modules_install firmware_install dtbo.img \
 	CC=${CC} \
 	CLANG_PATH=${CLANG_PATH} \
 	PATH=${PATH} \
