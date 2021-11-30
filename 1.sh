@@ -55,6 +55,9 @@ export SUBARCH=$ARCH
 export UN=$HOME/kernels
 export CONFIG=".config"
 export LOG="2>&1 | tee log.txt"
+export KBUILD_BUILD_USER=Anonym3310
+export KBUILD_KVER="-AkameKernel"
+export KBUILD_BUILD_HOST=kali
 
 
 #########################
