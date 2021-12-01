@@ -21,24 +21,21 @@ echo -e "      ##  ##     ## ##     ## ##     ## ##    ##     ##    ##     ## ##
 echo -e "     #### ##     ## ##     ##  #######  ##     ##    ##    ##     ## ########$nocol"
 echo -e "$red\n ##----------------------------------------------------------------------------##$nocol\n"
 
-
-
-
 #################
 #==[ Export ]===#
 #################
 
 #===[ Most Editable ]===#
 
-export DEFCONFIG=akame-raphael_defconfig
-export NKD=AkameKernel-sm8150
-export CODENAME=raphael
+export DEFCONFIG=begonia_user_defconfig
+export NKD=begonia
+export CODENAME=brgonia
 GCC_or_CLANG=2
 BUILD_KH=2
-ONLY_BUILD_KH=1
+ONLY_BUILD_KH=2
 ONLY_BUILD_AN=1
-IMAGE=Image-dtb
-
+IMAGE=Image.gz-dtb
+VER="-11"
 
 #===[ Editable ]===#
 
@@ -52,6 +49,7 @@ export ANYKERNEL_DIR=AnyKernel3
 export OUT_DIR=out
 export ARCH=arm64
 export SUBARCH=$ARCH
+export HOST_ARCH=$(arch)
 export UN=$HOME/kernels
 export CONFIG=".config"
 export LOG="2>&1 | tee log.txt"
@@ -59,11 +57,9 @@ export KBUILD_BUILD_USER=Anonym3310
 export KBUILD_KVER="-AkameKernel"
 export KBUILD_BUILD_HOST=kali
 
-
 #########################
 #===[ Smart Exports ]===#
 #########################
-
 
 if [ "$GCC_or_CLANG" -eq "1" ]
 ####-------####
@@ -98,7 +94,6 @@ export PATH=$GCC_BINS:$PATH
 export CROSS_COMPILE=$GCC_PREFIX64
 export CROSS_COMPILE_ARM32=$GCC_PREFIX32
 
-
 ####---------####
 #===[ Clang ]===#
 ####---------####
@@ -106,7 +101,6 @@ else
 
 #===[ Most Editable ]===#
 
-VER="-11"
 export CC=clang${VER}
 LLVM=llvm${VER}
 CLANG_PATH1=/usr
@@ -141,25 +135,15 @@ export CROSS_COMPILE_ARM32=$GCC_PREFIX32
 VALUES="OBJCOPY=llvm-objcopy${VER} \
         OBJDUMP=llvm-objdump${VER} \
         STRIP=llvm-strip${VER} \
-	NM=llvm-nm${VER} \
+        NM=llvm-nm${VER} \
         AR=llvm-ar${VER} \
-	AS=llvm-as${VER} \
+        AS=llvm-as${VER} \
 	LD=ld.lld"
-export KBUILD_COMPILER_STRING="$(${CLANG_PATH} --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')"
+export KBUILD_COMPILER_STRING="$(${CLANG_PATH}/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')"
 
 fi
 
-
-######################
-#=[ START OF BUILD ]=#
-######################
-
-
-if [ "$ONLY_BUILD_AN" -eq "1" ]
-then
-
-if [ "$ONLY_BUILD_KH" -eq "1" ]
-then
+#set values
 
 buildkernel(){
 echo -e "$yellow\n ##============================================================================##"
@@ -171,8 +155,6 @@ if [ "$GCC_or_CLANG" -eq "1" ]
 #===[ GCC ]===#
 ####-------####
 then
-
-
     	make $DEFCONFIG all modules_install firmware_install dtbo.img \
 	CC=${CC} \
 	PATH=${PATH} \
@@ -185,13 +167,10 @@ then
 	${JOBS} \
 	${LOG}
 
-
 ####---------####
 #===[ Clang ]===#
 ####---------####
 else
-
-
 	make $DEFCONFIG all modules_install firmware_install dtbo.img \
 	CC=${CC} \
 	CLANG_PATH=${CLANG_PATH} \
@@ -209,15 +188,6 @@ else
 fi
 }
 
-buildkernel
-
-
-if [ "$BUILD_KH" -eq "1" ]
-
-#####################
-#===[ Biuild KH ]===#
-#####################
-then
 
 buildkh(){
 echo -e "$yellow\n ##============================================================================##"
@@ -225,24 +195,17 @@ echo -e " ##=========================== Build Kernel Headers ===================
 echo -e " ##============================================================================##$nocol\n"
 
 sudo rm -rf ${UN}/kernel-headers/kernel-headers/
-
 sudo rm -rf ${UN}/tmp
-
 rm -rf ${UN}/kernel-headers-${CODENAME}.tar.xz
-
 mkdir ${UN}/kernel-headers/kernel-headers/
-
 cp -r * ${UN}/kernel-headers/kernel-headers/
-
 cd ${UN}/kernel-headers/kernel-headers/
-
 
 if [ "$GCC_or_CLANG" -eq "1" ]
 ####-------####
 #===[ GCC ]===#
 ####-------####
 then
-
 	make $DEFCONFIG prepare modules_prepare vdso_prepare \
 	CC=${CC} \
 	PATH=${PATH} \
@@ -251,12 +214,10 @@ then
 	ARCH=${ARCH} \
     	${JOBS}
 
-
 ####---------####
 #===[ Clang ]===#
 ####---------####
 else
-
    	make $DEFCONFIG prepare modules_prepare vdso_prepare \
 	CC=${CC} \
 	CLANG_PATH=${CLANG_PATH} \
@@ -267,76 +228,53 @@ else
 	ARCH=${ARCH} \
 	${JOBS} \
     	$VALUES
-
-
 fi
 
 mkdir ${UN}/tmp
-
 KN=$(find ${OUT_DIR}/lib/modules/ -name modules.*)
 
-cp -r arch/arm* Makefile ${OUT_DIR}/Module.symvers ${KN} ${OUT_DIR}/scripts/mod/modpost ${OUT_DIR}/scripts/genksyms/genksyms  include scripts drivers/misc /${UN}/tmp 
+cp -r arch/arm* Makefile ${OUT_DIR}/Module.symvers \
+${KN} ${OUT_DIR}/scripts/mod/modpost ${OUT_DIR}/scripts/genksyms/genksyms  \
+include scripts drivers/misc /${UN}/tmp
 
 rm -rf *
-
 cp -r ${UN}/tmp/* $PWD
-
 mv modpost scripts/mod/
-
 mv genksyms scripts/genksyms/
-
 rm -rf ${UN}/tmp
-
 mkdir arch
-
 cp -r arm* arch
-
 rm -rf arm*
-
 mkdir drivers
-
 cp -r misc drivers
-
 rm -rf misc
-
 cd ${UN}/kernel-headers/kernel-headers/
-
 cd $UN/
 
 sudo dpkg-deb --build kernel-headers kernel-headers-${CODENAME}.deb
-
 ls -l kernel-headers-${CODENAME}.deb
-
 
 BUILD_END=$(date +"%s")
 DIFF=$(($BUILD_END - $BUILD_START))
 echo -e "$blue kernel-headers compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
 }
 
-buildkh
 
-
-zipping(){
+zipak3(){
 echo -e "$yellow\n ##============================================================================##"
 echo -e " ##===================== Creating A Flashable *.zip Archive ===================##"
 echo -e " ##============================================================================##$nocol\n"
 
-
 cd ${UN}/${NKD}
-
 rm -rf ${ANYKERNEL_DIR}
-
 cp ${UN}/${ANYKERNEL_DIR} ${UN}/${NKD} -r
-
 
 if [ "$GCC_or_CLANG" -eq "1" ]
 ####-------####
 #===[ GCC ]===#
 ####-------####
 then
-
-
-	    make modules_install \
+	make modules_install \
         CC=${CC} \
         PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
@@ -344,9 +282,9 @@ then
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         INSTALL_MOD_DIR=. \
-	    ${JOBS}
+	${JOBS}
 
- 	    KERNEL_NAME=$(make kernelrelease \
+ 	KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
 	PATH=${PATH} \
         CROSS_COMPILE=${CROSS_COMPILE} \
@@ -354,16 +292,13 @@ then
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         INSTALL_MOD_PATH=. \
-	    ${JOBS})
-
+	${JOBS})
 
 ####---------####
 #===[ Clang ]===#
 ####---------####
 else
-
-
-	    make modules_install \
+	make modules_install \
         CC=${CC} \
         CLANG_PATH=${CLANG_PATH} \
 	PATH=${PATH} \
@@ -373,10 +308,10 @@ else
         ARCH=${ARCH} \
         O=${OUT_DIR} \
         INSTALL_MOD_DIR=. \
-	    ${JOBS} \
-	    $VALUES
+	${JOBS} \
+	$VALUES
 
-	    KERNEL_NAME=$(make kernelrelease \
+	KERNEL_NAME=$(make kernelrelease \
         CC=${CC} \
         CLANG_PATH=${CLANG_PATH} \
 	PATH=${PATH} \
@@ -387,12 +322,9 @@ else
         O=${OUT_DIR} \
         ${JOBS} \
 	$VALUES)
-
 fi
 
-
 #===[ COPYNG ]===#
-
 
 cd ${UN}/${NKD}/${OUT_DIR}
 rm $(find lib/modules/ -name build)
@@ -404,14 +336,11 @@ cp $(find -name *.fw) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/
 cd ..
 cd ..
 
-
 #===( EDITABLE )===#
-
 
 cp $(find -name ${IMAGE}) ${ANYKERNEL_DIR}/
 cp $(find -name dtb) ${ANYKERNEL_DIR}/
 cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
-
 
 #===[ ZIPPING ]===#
 
@@ -419,48 +348,55 @@ cp -r AK3/* ${ANYKERNEL_DIR}
 cd ${ANYKERNEL_DIR}
 zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
 
-
 #===[ TIME BUILD ]===#
-
 
 BUILD_END=$(date +"%s")
 DIFF=$(($BUILD_END - $BUILD_START))
 echo -e "$blue Kernel compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
 }
 
-zipping
 
+######################
+#=[ START OF BUILD ]=#
+######################
+
+if [ "$ONLY_BUILD_AN" -eq "1" ]
+then
+
+if [ "$ONLY_BUILD_KH" -eq "1" ]
+then
+
+buildkernel
+
+if [ "$BUILD_KH" -eq "1" ]
+
+#####################
+#===[ Biuild KH ]===#
+#####################
+then
+
+buildkh
+
+zipak3
 
 #################
 #===[Skip KH]===#
 #################
 else
 
-zipping
+zipak3
 
 fi
 
-
-#####################
 #===[ END BUILD ]===#
-#####################
 
-
-
-
-#####################################
 #===[ ONLY BUILD KERNEL HEADERS ]===#
-#####################################
 
 else
 
-
 buildkh
 
-
 fi
-
-
 
 ################################
 #===[ ONLY_BUILD_ANYKERNEL ]===#
@@ -468,6 +404,6 @@ fi
 
 else
 
-zipping
+zipak3
 
 fi
