@@ -27,35 +27,45 @@ echo -e "$red\n ##--------------------------------------------------------------
 
 #===[ Most Editable ]===#
 
-export DEFCONFIG=begonia_user_defconfig
-export NKD=begonia
-export CODENAME=brgonia
+DEFCONFIG=lineage_x2_defconfig
+NKD=leeco_msm8996
+CODENAME=msm8996
 GCC_or_CLANG=2
 BUILD_KH=2
-ONLY_BUILD_KH=2
-ONLY_BUILD_AN=1
+ONLY_BUILD_KH=1
+ONLY_BUILD_AN=2
 IMAGE=Image.gz-dtb
-VER="-11"
+VER="-10"
+COMPILE="$IMAGE modules_install dtb dtbo.img"
 
 #===[ Editable ]===#
 
 #export USE_CCACHE=1
 #export CCACHE_DIR=~/.ccache
-export JOBS="-j14"
+JOBS="-j14"
 
 #===[ Standart ]===#
 
-export ANYKERNEL_DIR=AnyKernel3
-export OUT_DIR=out
-export ARCH=arm64
-export SUBARCH=$ARCH
-export HOST_ARCH=$(arch)
-export UN=$HOME/kernels
-export CONFIG=".config"
-export LOG="2>&1 | tee log.txt"
-export KBUILD_BUILD_USER=Anonym3310
-export KBUILD_KVER="-AkameKernel"
-export KBUILD_BUILD_HOST=kali
+ANYKERNEL_DIR=AnyKernel3
+OUT_DIR=out
+ARCH=arm64
+SUBARCH=$ARCH
+HOST_ARCH=$(arch)
+UN=$HOME/kernels
+CONFIG=".config"
+LOG="2>&1 | tee log.txt"
+KBUILD_BUILD_USER=Anonym3310
+KBUILD_KVER="-AkameKernel"
+KBUILD_BUILD_HOST=anonym3310
+KERNEL_MAKE_ENV="DTC_EXT=/usr/bin/dtc CONFIG_BUILD_ARM64_DT_OVERLAY=y"
+CLANG_LD="OBJCOPY=llvm-objcopy${VER} \
+          OBJDUMP=llvm-objdump${VER} \
+          STRIP=llvm-strip${VER} \
+          NM=llvm-nm${VER} \
+          AR=llvm-ar${VER} \
+          AS=llvm-as${VER} \
+	  LD=ld.lld${VER}"
+VALUES=$KERNEL_MAKE_ENV #$CLANG_LD
 
 #########################
 #===[ Smart Exports ]===#
@@ -69,7 +79,7 @@ then
 
 #===[ Most Editable ]===#
 
-export CC=gcc
+CC=gcc
 GCC_PATH64=/usr
 GCC_PATH32=/usr
 GCC_BIN64=$GCC_PATH64/bin
@@ -89,10 +99,10 @@ GCC_LIB64=$GCC_PATH64/lib/$GCC_PREF64
 
 GCC_LIBS=$GCC_LIB64:$GCC_LIB32
 GCC_BINS=$GCC_BIN64:$GCC_BIN32
-export LD_LIBRARY_PATH=$GCC_LIBS:$LD_LIBRARY_PATH
-export PATH=$GCC_BINS:$PATH
-export CROSS_COMPILE=$GCC_PREFIX64
-export CROSS_COMPILE_ARM32=$GCC_PREFIX32
+LD_LIBRARY_PATH=$GCC_LIBS:$LD_LIBRARY_PATH
+PATH=$GCC_BINS:$PATH
+CROSS_COMPILE=$GCC_PREFIX64
+CROSS_COMPILE_ARM32=$GCC_PREFIX32
 
 ####---------####
 #===[ Clang ]===#
@@ -101,7 +111,7 @@ else
 
 #===[ Most Editable ]===#
 
-export CC=clang${VER}
+CC=clang${VER}
 LLVM=llvm${VER}
 CLANG_PATH1=/usr
 CLANG_BIN=$CLANG_PATH1/lib/${LLVM}/bin
@@ -126,26 +136,29 @@ GCC_LIB32=$GCC_PATH32/lib/$GCC_PREF32
 GCC_BINS=$GCC_BIN64:$GCC_BIN32
 GCC_LIBS=$GCC_LIB64:$GCC_LIB32
 CLANG_LIBS=$CLANG_LIB64:$CLANG_LIB32
-export LD_LIBRARY_PATH=$CLANG_LIBS:$GCC_LIBS:$LD_LIBRARY_PATH
-export CLANG_PATH=${CLANG_BIN}
-export PATH=${CLANG_PATH}:${PATH}
-export CROSS_COMPILE=$GCC_PREFIX64
-export CLANG_TRIPLE=$GCC_PREFIX64
-export CROSS_COMPILE_ARM32=$GCC_PREFIX32
-VALUES="OBJCOPY=llvm-objcopy${VER} \
-        OBJDUMP=llvm-objdump${VER} \
-        STRIP=llvm-strip${VER} \
-        NM=llvm-nm${VER} \
-        AR=llvm-ar${VER} \
-        AS=llvm-as${VER} \
-	LD=ld.lld"
-export KBUILD_COMPILER_STRING="$(${CLANG_PATH}/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')"
+LD_LIBRARY_PATH=$CLANG_LIBS:$GCC_LIBS:$LD_LIBRARY_PATH
+CLANG_PATH=${CLANG_BIN}
+PATH=${CLANG_PATH}:${PATH}
+CROSS_COMPILE=$GCC_PREFIX64
+CLANG_TRIPLE=$GCC_PREFIX64
+CROSS_COMPILE_ARM32=$GCC_PREFIX32
+KBUILD_COMPILER_STRING="$(${CLANG_PATH}/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')"
 
 fi
 
-#set values
+#======[ FUNCTIONS ]======#
 
-buildkernel(){
+
+buildtime()
+	{
+BUILD_END=$(date +"%s")
+DIFF=$(($BUILD_END - $BUILD_START))
+        echo -e "$blue Kernel compiled on $(($DIFF / 60)) minute(s) \
+        and $(($DIFF % 60)) seconds$nocol"
+	}
+
+buildkernel()
+	{
 echo -e "$yellow\n ##============================================================================##"
 echo -e " ##========================= Build Kernel From Source =========================##"
 echo -e " ##============================================================================##$nocol\n"
@@ -155,7 +168,7 @@ if [ "$GCC_or_CLANG" -eq "1" ]
 #===[ GCC ]===#
 ####-------####
 then
-    	make $DEFCONFIG all modules_install firmware_install dtbo.img \
+    	make $DEFCONFIG $COMPILE \
 	CC=${CC} \
 	PATH=${PATH} \
 	CROSS_COMPILE=${CROSS_COMPILE} \
@@ -171,7 +184,7 @@ then
 #===[ Clang ]===#
 ####---------####
 else
-	make $DEFCONFIG all modules_install firmware_install dtbo.img \
+	make $DEFCONFIG $COMPILE \
 	CC=${CC} \
 	CLANG_PATH=${CLANG_PATH} \
 	PATH=${PATH} \
@@ -186,10 +199,11 @@ else
 	$VALUES \
 	${LOG}
 fi
-}
+	}
 
 
-buildkh(){
+buildkh()
+	{
 echo -e "$yellow\n ##============================================================================##"
 echo -e " ##=========================== Build Kernel Headers ===========================##"
 echo -e " ##============================================================================##$nocol\n"
@@ -233,9 +247,9 @@ fi
 mkdir ${UN}/tmp
 KN=$(find ${OUT_DIR}/lib/modules/ -name modules.*)
 
-cp -r arch/arm* Makefile ${OUT_DIR}/Module.symvers \
-${KN} ${OUT_DIR}/scripts/mod/modpost ${OUT_DIR}/scripts/genksyms/genksyms  \
-include scripts drivers/misc /${UN}/tmp
+	cp -r arch/arm* Makefile ${OUT_DIR}/Module.symvers \
+	${KN} ${OUT_DIR}/scripts/mod/modpost ${OUT_DIR}/scripts/genksyms/genksyms  \
+	include scripts drivers/misc /${UN}/tmp
 
 rm -rf *
 cp -r ${UN}/tmp/* $PWD
@@ -254,13 +268,12 @@ cd $UN/
 sudo dpkg-deb --build kernel-headers kernel-headers-${CODENAME}.deb
 ls -l kernel-headers-${CODENAME}.deb
 
-BUILD_END=$(date +"%s")
-DIFF=$(($BUILD_END - $BUILD_START))
-echo -e "$blue kernel-headers compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
-}
+buildtime
+	}
 
 
-zipak3(){
+zipak3()
+	{
 echo -e "$yellow\n ##============================================================================##"
 echo -e " ##===================== Creating A Flashable *.zip Archive ===================##"
 echo -e " ##============================================================================##$nocol\n"
@@ -331,10 +344,9 @@ rm $(find lib/modules/ -name build)
 rm $(find lib/modules/ -name source)
 cp lib/modules/ -r ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/lib/
 cd firmware
-cp $(find -name *.bin) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
-cp $(find -name *.fw) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
-cd ..
-cd ..
+#cp $(find -name *.bin) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
+#cp $(find -name *.fw) -r --parents ${UN}/${NKD}/${ANYKERNEL_DIR}/modules/system/etc/firmware
+cd ../../
 
 #===( EDITABLE )===#
 
@@ -344,16 +356,19 @@ cp $(find -name dtbo.img) ${ANYKERNEL_DIR}/
 
 #===[ ZIPPING ]===#
 
-cp -r AK3/* ${ANYKERNEL_DIR}
+cd ${UN}/${NKD}
+	if [ -f AK3 ]
+	then
+	cp -r AK3/* ${ANYKERNEL_DIR}
+	fi
 cd ${ANYKERNEL_DIR}
-zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * -x .git README.md *placeholder
+	zip -r -9 AkameKernel-${CODENAME}-$(date +%d-%m-%y).zip * \
+	-x .git README.md *placeholder
 
 #===[ TIME BUILD ]===#
 
-BUILD_END=$(date +"%s")
-DIFF=$(($BUILD_END - $BUILD_START))
-echo -e "$blue Kernel compiled on $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds$nocol"
-}
+buildtime
+	}
 
 
 ######################
